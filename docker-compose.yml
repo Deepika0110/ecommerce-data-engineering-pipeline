@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: ecommerce_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+      - ./data:/data:ro
+
+  pipeline:
+    build: .
+    depends_on:
+      - db
+    environment:
+      PGDATABASE: ecommerce_db
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGHOST: db
+      PGPORT: "5432"
+      WINDOW_DAYS: "7"
+    command: ["sh", "-c", "python scripts/wait_for_db.py && python scripts/bootstrap_db.py && python scripts/run_pipeline.py"]
+
+volumes:
+  pgdata:
