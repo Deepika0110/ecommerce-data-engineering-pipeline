@@ -8,17 +8,57 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: ecommerce_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ecommerce_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PGDATABASE: ecommerce_db
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGHOST: localhost
+      PGPORT: 5432
+
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run pipeline checks
+      - name: Wait for Postgres
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          until pg_isready -h localhost -p 5432 -U postgres -d ecommerce_db; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
+
+      - name: Initialize schemas
+        run: psql -h localhost -U postgres -d ecommerce_db -f sql/init/001_create_schemas.sql
+
+      - name: Bootstrap sample data
+        run: python scripts/bootstrap_db.py
+
+      - name: Run pipeline
+        run: python scripts/run_pipeline.py
+
+      - name: Run contract checks
         run: python scripts/run_checks.py
