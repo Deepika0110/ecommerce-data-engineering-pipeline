@@ -88,9 +88,14 @@ flowchart TD
   E[Staging Layer<br/>staging.orders_clean<br/>staging.payments_clean]
   F[Analytics Layer<br/>fact_orders<br/>dim_customer<br/>dim_product<br/>dim_date]
   G[Observability Layer<br/>pipeline_runs<br/>pipeline_metrics<br/>revenue_anomaly_log]
-  A --> B --> C
+
+  A --> B
+  B --> C
   C --> D
-  C --> E --> F --> G
+  C --> E
+  E --> F
+  F --> G
+```
 
   
 ## Architecture Diagram
