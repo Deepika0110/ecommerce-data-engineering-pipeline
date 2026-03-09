@@ -30,7 +30,6 @@ This project demonstrates real-world **data engineering patterns** including:
 • SQL  
 • Docker  
 • psycopg2  
-• Pandas  
 
 ---
 
@@ -79,6 +78,7 @@ docker exec -it ecommerce_db psql -U postgres -d ecommerce_db
 
 # Architecture
 
+
 ```mermaid
 flowchart TD
   A[CSV Data Sources<br/>orders.csv<br/>payments.csv<br/>customers.csv<br/>products.csv]
@@ -95,6 +95,8 @@ flowchart TD
   C --> E
   E --> F
   F --> G
+```
+
   
 ## Architecture Diagram
 
