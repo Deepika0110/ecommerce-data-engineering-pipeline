@@ -354,3 +354,14 @@ This project demonstrates several **real-world data engineering patterns**:
 • statistical anomaly detection  
 
 These are commonly used patterns in production data platforms.
+
+## Sample Outputs
+
+### Pipeline Metrics Trend
+![Pipeline Metrics Trend](docs/screenshots/metrics_trend.png)
+
+### Quarantine Breakdown
+![Quarantine Breakdown](docs/screenshots/quarantine_breakdown.png)
+
+### Revenue Anomalies
+![Revenue Anomalies](docs/screenshots/revenue_anomalies.png)
