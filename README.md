@@ -35,27 +35,25 @@ This project demonstrates real-world **data engineering patterns** including:
 
 # Quick Start
 
-### 1️⃣ Create Python environment
+## Quick Start
 
+### 1. Create Python environment
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 ```
 
-### 2️⃣ Install dependencies
-
+### 2. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3️⃣ Run the pipeline
-
+### 3. Run the pipeline
 ```bash
 python scripts/run_pipeline.py
 ```
 
-### 4️⃣ Run validation checks
-
+### 4. Run validation checks
 ```bash
 python scripts/run_checks.py
 ```
@@ -76,28 +74,6 @@ docker exec -it ecommerce_db psql -U postgres -d ecommerce_db
 
 ---
 
-# Architecture
-
-
-```mermaid
-flowchart TD
-  A[CSV Data Sources<br/>orders.csv<br/>payments.csv<br/>customers.csv<br/>products.csv]
-  B[Raw Layer<br/>PostgreSQL<br/>raw.orders<br/>raw.payments<br/>raw.customers<br/>raw.products]
-  C[Data Quality Validation<br/>duplicates<br/>missing ids<br/>negative totals]
-  D[Quarantine Layer<br/>raw.quarantine_orders<br/>raw.quarantine_payments]
-  E[Staging Layer<br/>staging.orders_clean<br/>staging.payments_clean]
-  F[Analytics Layer<br/>fact_orders<br/>dim_customer<br/>dim_product<br/>dim_date]
-  G[Observability Layer<br/>pipeline_runs<br/>pipeline_metrics<br/>revenue_anomaly_log]
-
-  A --> B
-  B --> C
-  C --> D
-  C --> E
-  E --> F
-  F --> G
-```
-
-  
 ## Architecture Diagram
 
 ![Pipeline Architecture](docs/pipeline_architecture.png)
