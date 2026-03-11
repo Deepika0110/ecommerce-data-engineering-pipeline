@@ -31,9 +31,9 @@ summary = pd.read_sql(
 orders = int(summary["total_orders"][0])
 revenue_total = float(summary["total_revenue"][0])
 
-col1, col2 = st.columns(2)
-col1.metric("Total Orders", f"{orders:,}")
-col2.metric("Total Revenue", f"${revenue_total:,.2f}")
+k1, k2 = st.columns(2)
+k1.metric("Total Orders", f"{orders:,}")
+k2.metric("Total Revenue", f"${revenue_total:,.2f}")
 
 # -----------------------------
 # Daily revenue trend
@@ -84,6 +84,96 @@ if anomalies.empty:
     st.success("No revenue anomalies detected in the current data window.")
 else:
     st.dataframe(anomalies, use_container_width=True)
+
+# -----------------------------
+# New charts
+# -----------------------------
+st.subheader("Business Insights")
+
+c1, c2 = st.columns(2)
+
+# Top cities by revenue
+city_revenue = pd.read_sql(
+    """
+    SELECT
+        c.city,
+        ROUND(SUM(f.order_total)::numeric, 2) AS revenue
+    FROM analytics.fact_orders f
+    JOIN analytics.dim_customer c
+      ON f.customer_id = c.customer_id
+    GROUP BY c.city
+    ORDER BY revenue DESC
+    LIMIT 10
+    """,
+    conn,
+)
+
+fig_city = px.bar(
+    city_revenue,
+    x="city",
+    y="revenue",
+    title="Top 10 Cities by Revenue",
+)
+
+fig_city.update_layout(
+    xaxis_title="City",
+    yaxis_title="Revenue ($)",
+    template="plotly_dark",
+)
+
+c1.plotly_chart(fig_city, use_container_width=True)
+
+# Payment status distribution
+payment_status = pd.read_sql(
+    """
+    SELECT
+        COALESCE(payment_status, 'unknown') AS payment_status,
+        COUNT(*) AS count
+    FROM analytics.fact_orders
+    GROUP BY COALESCE(payment_status, 'unknown')
+    ORDER BY count DESC
+    """,
+    conn,
+)
+
+fig_payment = px.pie(
+    payment_status,
+    names="payment_status",
+    values="count",
+    title="Payment Status Distribution",
+)
+
+fig_payment.update_layout(template="plotly_dark")
+
+c2.plotly_chart(fig_payment, use_container_width=True)
+
+# Orders per day
+orders_day = pd.read_sql(
+    """
+    SELECT
+        order_day,
+        COUNT(*) AS order_count
+    FROM analytics.fact_orders
+    GROUP BY order_day
+    ORDER BY order_day
+    """,
+    conn,
+)
+
+fig_orders = px.bar(
+    orders_day,
+    x="order_day",
+    y="order_count",
+    title="Orders Per Day",
+)
+
+fig_orders.update_layout(
+    xaxis_title="Date",
+    yaxis_title="Orders",
+    template="plotly_dark",
+)
+
+st.plotly_chart(fig_orders, use_container_width=True)
 
 # -----------------------------
 # Pipeline health trend
