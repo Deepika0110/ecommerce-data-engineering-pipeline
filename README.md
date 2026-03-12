@@ -385,3 +385,17 @@ These are commonly used patterns in production data platforms.
 
 ### Revenue Anomalies
 ![Revenue Anomalies](docs/screenshots/revenue_anomalies.png)
+
+## 📊 Dashboard Preview
+
+### Full Dashboard
+![Dashboard](docs/screenshots/dashboard_overview.png)
+
+### Daily Revenue Trend
+![Revenue Trend](docs/screenshots/revenue_trend.png)
+
+### Business Insights
+![Business Insights](docs/screenshots/business_insights.png)
+
+### Pipeline Health Monitoring
+![Pipeline Health](docs/screenshots/pipeline_health.png)
