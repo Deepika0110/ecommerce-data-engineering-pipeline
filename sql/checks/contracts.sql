@@ -46,9 +46,10 @@ SELECT 'fact_orders_min_volume' AS check_name,
        COUNT(*) AS failing_rows
 FROM analytics.fact_orders;
 
--- 6) pipeline must have run successfully within the last 24 hours
+-- 6) pipeline must have run successfully within the last {freshness_hours} hours
+--    default 24h, override with FRESHNESS_HOURS env var (e.g. 168 for local dev)
 SELECT 'pipeline_ran_recently' AS check_name,
-       CASE WHEN MAX(finished_at) >= NOW() - INTERVAL '24 hours' THEN 'PASS' ELSE 'FAIL' END AS status,
+       CASE WHEN MAX(finished_at) >= NOW() - INTERVAL '1 hour' * {freshness_hours} THEN 'PASS' ELSE 'FAIL' END AS status,
        0 AS failing_rows
 FROM analytics.pipeline_runs
 WHERE status = 'success';

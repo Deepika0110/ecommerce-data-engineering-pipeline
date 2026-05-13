@@ -21,8 +21,11 @@ python scripts/bootstrap_db.py
 # Run the full pipeline
 python scripts/run_pipeline.py
 
-# Run contract/quality checks
+# Run contract/quality checks (default freshness window: 24h)
 python scripts/run_checks.py
+
+# Run checks locally with a wider freshness window (pipeline_ran_recently won't fail)
+FRESHNESS_HOURS=168 python scripts/run_checks.py
 
 # Simulate a daily incremental load
 python scripts/generate_daily_orders.py   # writes data/orders_daily.csv + payments_daily.csv

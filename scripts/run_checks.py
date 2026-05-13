@@ -8,6 +8,7 @@ DB_HOST = os.getenv("PGHOST", "localhost")
 DB_PORT = int(os.getenv("PGPORT", "5432"))
 
 CHECKS_FILE = "sql/checks/contracts.sql"
+FRESHNESS_HOURS = int(os.getenv("FRESHNESS_HOURS", "24"))
 
 def main():
     conn = psycopg2.connect(
@@ -20,7 +21,7 @@ def main():
     conn.autocommit = True
 
     with open(CHECKS_FILE, "r", encoding="utf-8") as f:
-        sql = f.read()
+        sql = f.read().replace("{freshness_hours}", str(FRESHNESS_HOURS))
 
     failed = False
     with conn.cursor() as cur:
