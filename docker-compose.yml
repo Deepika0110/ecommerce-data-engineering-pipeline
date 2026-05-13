@@ -1,21 +1,29 @@
 services:
   db:
     image: postgres:14
+    container_name: ecommerce_db
     environment:
       POSTGRES_DB: ecommerce_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./sql/init:/docker-entrypoint-initdb.d
       - ./data:/data:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ecommerce_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   pipeline:
     build: .
+    container_name: ecommerce_pipeline
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       PGDATABASE: ecommerce_db
       PGUSER: postgres
@@ -23,7 +31,31 @@ services:
       PGHOST: db
       PGPORT: "5432"
       WINDOW_DAYS: "7"
-    command: ["sh", "-c", "python scripts/wait_for_db.py && python scripts/bootstrap_db.py && python scripts/run_pipeline.py"]
+    command: ["sh", "-c", "python scripts/bootstrap_db.py && python scripts/run_pipeline.py"]
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: ecommerce_metabase
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+  dashboard:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGDATABASE: ecommerce_db
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGHOST: db
+      PGPORT: "5432"
+    command: ["streamlit", "run", "dashboard/app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+    ports:
+      - "8501:8501"
 
 volumes:
   pgdata:

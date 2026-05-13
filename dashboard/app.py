@@ -10,7 +10,8 @@ st.title("📊 Ecommerce Data Pipeline Dashboard")
 
 conn = psycopg2.connect(
     dbname=os.getenv("PGDATABASE", "ecommerce_db"),
-    user=os.getenv("PGUSER", "deepikabode"),
+    user=os.getenv("PGUSER", os.getenv("USER")),
+    password=os.getenv("PGPASSWORD") or None,
     host=os.getenv("PGHOST", "localhost"),
     port=os.getenv("PGPORT", "5432"),
 )
@@ -207,5 +208,38 @@ fig2.update_layout(
 )
 
 st.plotly_chart(fig2, use_container_width=True)
+
+# -----------------------------
+# Pipeline run history
+# -----------------------------
+st.subheader("Recent Pipeline Runs")
+
+runs = pd.read_sql(
+    """
+    SELECT
+        run_id,
+        status,
+        started_at,
+        finished_at,
+        ROUND(EXTRACT(EPOCH FROM (finished_at - started_at))::numeric, 1) AS duration_sec,
+        notes
+    FROM analytics.pipeline_runs
+    ORDER BY started_at DESC
+    LIMIT 10
+    """,
+    conn,
+)
+
+def _status_color(val):
+    color = "green" if val == "success" else ("red" if val == "failed" else "gray")
+    return f"color: {color}; font-weight: bold"
+
+if runs.empty:
+    st.info("No pipeline runs recorded yet.")
+else:
+    st.dataframe(
+        runs.style.applymap(_status_color, subset=["status"]),
+        use_container_width=True,
+    )
 
 conn.close()

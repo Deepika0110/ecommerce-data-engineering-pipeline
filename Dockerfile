@@ -7,5 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY scripts ./scripts
 COPY data ./data
+COPY sql ./sql
+COPY dashboard ./dashboard
 
 CMD ["python", "scripts/run_pipeline.py"]

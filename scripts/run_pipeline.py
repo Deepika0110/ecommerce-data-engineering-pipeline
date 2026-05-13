@@ -197,7 +197,7 @@ def main():
             cur.execute("SELECT COUNT(*) FROM raw.quarantine_payments;")
             quarantine_payments = cur.fetchone()[0]
 
-            MAX_ALLOWED_ERRORS = 999999  # set to e.g. 20 if you want strict failing
+            MAX_ALLOWED_ERRORS = 50
             if quarantine_orders > MAX_ALLOWED_ERRORS or quarantine_payments > MAX_ALLOWED_ERRORS:
                 raise Exception(
                     f"Data quality threshold breached: orders={quarantine_orders}, payments={quarantine_payments}"
@@ -404,6 +404,52 @@ def main():
                   (SELECT COUNT(*) FROM staging.payments_clean);
                 """,
                 (WINDOW_DAYS,),
+            )
+            # ---------- Views ----------
+            run_sql(cur, "DROP VIEW IF EXISTS analytics.v_revenue_anomaly_daily CASCADE;")
+            run_sql(
+                cur,
+                """
+                CREATE VIEW analytics.v_revenue_anomaly_daily AS
+                WITH daily AS (
+                  SELECT
+                    order_day,
+                    SUM(CASE WHEN payment_status = 'paid' THEN payment_amount ELSE 0 END) AS revenue,
+                    COUNT(*) AS orders
+                  FROM analytics.fact_orders
+                  GROUP BY order_day
+                ),
+                stats AS (
+                  SELECT *,
+                    AVG(revenue) OVER (ORDER BY order_day ROWS BETWEEN 14 PRECEDING AND 1 PRECEDING) AS avg14,
+                    STDDEV_SAMP(revenue) OVER (ORDER BY order_day ROWS BETWEEN 14 PRECEDING AND 1 PRECEDING) AS std14
+                  FROM daily
+                )
+                SELECT
+                  order_day,
+                  revenue,
+                  orders,
+                  avg14,
+                  std14,
+                  CASE WHEN avg14 IS NULL OR std14 IS NULL OR std14 = 0 THEN NULL
+                    ELSE (revenue - avg14) / std14 END AS z_score,
+                  CASE WHEN avg14 IS NOT NULL AND std14 IS NOT NULL AND std14 > 0
+                    AND ABS((revenue - avg14) / std14) > 3 THEN true ELSE false END AS is_anomaly
+                FROM stats;
+                """,
+            )
+
+            run_sql(cur, "DROP VIEW IF EXISTS analytics.v_metrics_trend CASCADE;")
+            run_sql(
+                cur,
+                """
+                CREATE VIEW analytics.v_metrics_trend AS
+                SELECT
+                  run_timestamp,
+                  ROUND(quarantined_orders::numeric / NULLIF(raw_orders_count, 0) * 100, 2) AS orders_quarantine_pct,
+                  ROUND(quarantined_payments::numeric / NULLIF(raw_payments_count, 0) * 100, 2) AS payments_quarantine_pct
+                FROM analytics.pipeline_metrics;
+                """,
             )
 
         # commit the whole run

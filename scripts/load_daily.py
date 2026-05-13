@@ -3,6 +3,7 @@ import psycopg2
 
 DB_NAME = os.getenv("PGDATABASE", "ecommerce_db")
 DB_USER = os.getenv("PGUSER", os.getenv("USER"))
+DB_PASSWORD = os.getenv("PGPASSWORD")
 DB_HOST = os.getenv("PGHOST", "localhost")
 DB_PORT = int(os.getenv("PGPORT", "5432"))
 
@@ -13,7 +14,7 @@ def main():
     if not os.path.exists(ORDERS_DAILY) or not os.path.exists(PAYMENTS_DAILY):
         raise FileNotFoundError("Daily CSVs not found. Run: python scripts/generate_daily_orders.py")
 
-    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, host=DB_HOST, port=DB_PORT)
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT)
     conn.autocommit = False
 
     try:

@@ -39,3 +39,37 @@ SELECT 'recent_anomalies_count' AS check_name,
        CASE WHEN COUNT(*) <= 5 THEN 'PASS' ELSE 'FAIL' END AS status,
        COUNT(*) AS failing_rows
 FROM analytics.revenue_anomaly_log;
+
+-- 5) fact table must have at least 100 rows
+SELECT 'fact_orders_min_volume' AS check_name,
+       CASE WHEN COUNT(*) >= 100 THEN 'PASS' ELSE 'FAIL' END AS status,
+       COUNT(*) AS failing_rows
+FROM analytics.fact_orders;
+
+-- 6) pipeline must have run successfully within the last 24 hours
+SELECT 'pipeline_ran_recently' AS check_name,
+       CASE WHEN MAX(finished_at) >= NOW() - INTERVAL '24 hours' THEN 'PASS' ELSE 'FAIL' END AS status,
+       0 AS failing_rows
+FROM analytics.pipeline_runs
+WHERE status = 'success';
+
+-- 7) every customer_id in fact must exist in dim_customer
+SELECT 'fact_orders_customer_ref' AS check_name,
+       CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'FAIL' END AS status,
+       COUNT(*) AS failing_rows
+FROM analytics.fact_orders f
+WHERE NOT EXISTS (
+  SELECT 1 FROM analytics.dim_customer d WHERE d.customer_id = f.customer_id
+);
+
+-- 8) paid payments with a non-empty order_id must reference an order in raw.orders
+--    (payments with empty order_id are already caught by the quarantine "missing order_id" rule)
+SELECT 'payments_order_ref' AS check_name,
+       CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'FAIL' END AS status,
+       COUNT(*) AS failing_rows
+FROM raw.payments p
+WHERE p.payment_status = 'paid'
+  AND p.order_id IS NOT NULL AND p.order_id <> ''
+  AND NOT EXISTS (
+    SELECT 1 FROM raw.orders o WHERE o.order_id = p.order_id
+  );

@@ -81,6 +81,31 @@ def main():
           run_id TEXT
         );
         """)
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS raw.orders_load (
+          order_id VARCHAR(50),
+          customer_id VARCHAR(50),
+          order_date TIMESTAMP,
+          order_total NUMERIC(10,2),
+          ingested_at TIMESTAMP DEFAULT NOW(),
+          source_file TEXT,
+          batch_id TEXT,
+          run_id TEXT
+        );
+        """)
+
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS raw.payments_load (
+          payment_id VARCHAR(50) PRIMARY KEY,
+          order_id VARCHAR(50),
+          payment_status TEXT,
+          payment_amount NUMERIC(10,2),
+          ingested_at TIMESTAMP DEFAULT NOW(),
+          source_file TEXT,
+          batch_id TEXT,
+          run_id TEXT
+        );
+        """)
 
         # Load base CSVs only if empty
         cur.execute("SELECT COUNT(*) FROM raw.customers;")
