@@ -54,11 +54,16 @@ jobs:
       - name: Initialize schemas
         run: psql -h localhost -U postgres -d ecommerce_db -f sql/init/001_create_schemas.sql
 
+      - name: Generate base data
+        run: python scripts/generate_data.py
+
       - name: Bootstrap sample data
         run: python scripts/bootstrap_db.py
 
       - name: Run pipeline
         run: python scripts/run_pipeline.py
+        env:
+          WINDOW_DAYS: 30
 
       - name: Run contract checks
         run: python scripts/run_checks.py
